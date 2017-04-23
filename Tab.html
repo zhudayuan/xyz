@@ -1,0 +1,336 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+	<style type="text/css">
+
+		body,table,div,p,input,th,td,tr {
+		border-collapse:collapse;
+		font-family:Futura, Arial, sans-serif;
+		font-size: 16px; 
+		margin: auto auto; 
+		width: auto; 
+		}
+		form,table,div,p,input,th,td,tr{
+			text-align:center;
+		}
+		table{
+		border:none;
+		}
+		caption {
+		font-size:larger;
+		margin:1em auto;
+		}
+		th,td {
+		padding:.65em;
+		}
+		th {
+		background:#555 none repeat scroll 0 0;
+		border:1px solid #777;
+		color:#fff;
+		}
+		tr,td {
+		border:1px solid #555;
+		}	
+		table input {
+		border:none;
+		background-color:transparent;
+		overflow-x:visible;
+		overflow-y:visible;
+		}
+		/*	tbody tr:nth-child(2n) {   
+     background: #777;  
+		} */
+		tbody tr:nth-child(2n+1) {   
+     background: #ccc;  
+		} 
+		tbody tr:hover {    
+     background: linear-gradient(#CDCDB4,#aaa);   
+     font-size: 17px;   
+		} 
+	#temp{
+		position:absolute;   
+		background-color: #000; opacity: 0.4; 
+		width: 100%; 	height: 100%; 
+		display:none; z-index: 1;
+	}
+  #sfcolumn{
+		position:absolute;  			 
+		background:#F0F0F0; width:500px; height:260px; 
+		font-family:Futura, Arial, sans-serif;
+		font-size: 16px; 
+		display:none;  z-index: 2;
+		top: -100px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+		margin: auto;
+  }
+  #sfcolumn textarea{
+  	width:460px; height:110px; 
+  }
+  #result{
+		margin:10px 25% 0 ;
+  	width:660px; height:210px; 
+  }
+	</style>
+  <title></title>
+</head>
+
+<body>
+	<div id="temp"></div>
+	<div id="sfcolumn">
+		<br/><br/>
+		<laber><input type="checkbox" name="choocol" value="field"/>字段名</laber>
+		<laber><input type="checkbox" name="choocol" value="type"/>数据类型</laber>
+		<laber><input type="checkbox" name="choocol" value="restrict"/>约束</laber>
+		<laber><input type="checkbox" name="choocol" value="default"/>默认值</laber>
+		<laber><input type="checkbox" name="choocol" value="note"/>注释</laber>
+		<br/><br/>
+		<laber>先把对应列的数据复制到文本框，确定之后，会自动写入表格</laber>
+		<br/>
+		<input type="button" value="清空列" onclick="delCol()"/>
+		<input type="button" value="确定" onclick="doCopy()"/>
+		<input type="button" value="重置" onclick="reset2()"/>
+		<input type="button" value="返回" onclick="returnMain()"/>
+		<br/>
+	<textarea id="context">
+	</textarea>
+		<br/>
+		
+	</div>
+<form id="form1" name="form1" method="post" action="">    
+  <table id='mytable'>
+    <caption>
+      <laber>表名:<input type="text" id="mytablename" value=""style="border-bottom:1px double #555; width:280px;" onchange="changeTabName()"/></laber>
+      <laber>表名注释:<input type="text" id="mytablenote" value=""style="border-bottom:1px double #555; width:280px;"/></laber>
+    </caption>
+
+    <thead>
+      <tr>
+      	<th><input type="checkbox" id="checkbox" name="checkboxh" onclick="chooseAll()"/></th> 
+        <th id='field' name='fieldh' >字段名</th>
+        <th id='type' name='typeh'>数据类型</th>
+        <th id='restrict' name='restricth'>约束</th>
+        <th id='default' name='defaulth'>默认值</th>
+        <th id='note' name='noteh'>注释</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+      	<td><input type="checkbox" name="checkbox" /></td> 
+        <td><input type="text" name="field" value="ID"/></td>
+        <td><input type="text" name="type" value="NUMBER(16)"/></td>
+        <td><input type="text" name="restrict" value="PRIMARY KEY"/></td>
+        <td><input type="text" name="default" value=""/></td>
+        <td><input type="text" name="note" value="主键"/></td>
+      </tr>
+      <tr>
+      	<td><input type="checkbox"  name="checkbox" /></td> 
+        <td><input type="text" name="field" value="ID"/></td>
+        <td><input type="text" name="type" value="VARCHAR2(16)"/></td>
+				<td><input type="text" name="restrict" value="NOT NULL"/></td>
+				<td><input type="text" name="default" value=""/></td>
+        <td><input type="text" name="note" value="外键"/></td>
+      </tr>
+      <div id="insert"></div> 
+    </tbody>
+  </table>
+<br />    
+
+<input type="button" value="添加行" onclick="addRow()" />    
+<input type="button" value="删除行" onclick="delRow()" /> 
+<input type="button" value="复制列" onclick="copyCol()" />
+<input type="button" value="重置" onclick="window.location.reload();" />    
+<input type="button" value="创建脚本" onclick="creatTabSQL()"/>  
+<input type="button" value="创建索引" onclick="creatIndexSQL()"/>
+<input type="button" value="创建相关RP表" onclick=""/>
+<div>
+<input type="button" value="创建序列" onclick="creatSeqSQL()"/> 
+<input type="text" id="mytable_seq_id" value="SEQ_表名_ID" style="border:0;border-bottom:1px double #555; width:280px;"/> 
+</div>
+</form> 
+	<textarea id="result">
+	</textarea>
+</body>
+<script type="text/javascript">
+window.onload=function(){ 
+  if(typeof String.prototype.trim=='undefined'){
+    String.prototype.trim = function () {
+      return this.replace(/^\s\s*/, '' ).replace(/\s\s*$/, '' );
+    }   
+	}
+}
+var tableid='mytable';
+//列id
+var arr=['checkbox','field','type','restrict','default','note'];
+function addRow(){ 
+	var newTr = $('#'+tableid).insertRow();
+	for(var i=0;i<arr.length;i++){
+  	var typestr='type='+(i==0?'checkbox':'text');
+  	//var idstr=' id=' + arr[i]+'_'+newTr.rowIndex;
+  	var namestr=' name='+arr[i];
+   	newTr.insertCell(i).innerHTML = "<td><input "+typestr+namestr+" value=''/></td>"; 
+ 	}
+} 
+function chooseAll(bool){
+	var ckstatus=($('#checkbox').checked?true:false);
+	if(true==bool)
+		ckstatus=true;
+	if(false==bool)
+		ckstatus=false;
+	 
+	var allck=$('^checkbox');
+	for(var i=0;i<allck.length;i++)
+		allck[i].checked=ckstatus;
+}
+function delRow(){
+	var allck=$('^checkbox');
+	$('#checkbox').checked=false;
+	for(var i=allck.length-1;i>=0;i--){
+		if(allck[i].checked&&allck[i].id!=arr[0]){
+			var index=allck[i].parentNode.parentNode.rowIndex;
+			$('#'+tableid).deleteRow(index);
+		}
+	}
+}
+function $(str) {
+	if(str.indexOf('#')==0)
+		return document.getElementById(str.substr(1));
+	if(str.indexOf('^')==0)
+		return document.getElementsByName(str.substr(1));
+	if(str.indexOf('&')==0)
+		return document.getElementsByTagName(str.substr(1));
+}
+Object.prototype.$=function(str){
+		if(str.indexOf('#')==0)
+		return this.getElementById(str.substr(1));
+	if(str.indexOf('^')==0)
+		return this.getElementsByName(str.substr(1));
+	if(str.indexOf('&')==0)
+		return this.getElementsByTagName(str.substr(1));
+}
+function copyCol(){
+	$('#temp').style.display='inline';
+	$('#sfcolumn').style.display='inline';
+}
+
+function doCopy(){
+	var cols=$('^choocol');
+	var col=new Array();
+	for(var i=0,j=0;i<cols.length;i++)
+		if(cols[i].checked){
+			col[j]=i;
+			j++;
+		}
+	var text=$('#context').value.trim();
+	var text1=text.split("\n");
+	if(col.length!=text1[0].trim().split("\t").length){
+		alert("复制内容为空或者列数与选择列数不相等");
+		return;
+	}
+	for(var i=0;i<text1.length;i++){
+		if($('#'+tableid).rows.length-2<i)
+			addRow();
+			var text2=text1[i].trim().split("\t");
+			for(var j=0;j<col.length;j++){
+				var tbinput=$('#'+tableid).rows[i+1].cells[col[j]+1].getElementsByTagName("INPUT")[0];
+				tbinput.value=text2[j].trim();
+			}
+	}
+	returnMain();
+}
+function reset2(){
+	var cols=$('^choocol');
+	for(var i=0,j=0;i<cols.length;i++)
+		if(cols[i].checked){
+			cols[i].checked=false;
+		}
+}
+function returnMain(){
+	$('#temp').style.display='none';
+	$('#sfcolumn').style.display='none';
+}
+function delCol(){
+	cols=$('^choocol');
+	for(var i=0;i<cols.length;i++)
+		if(cols[i].checked){
+			var rows=$('^'+cols[i].value);
+			for(var j=0;j<rows.length;j++){
+				rows[j].value="";
+			}
+		}
+	returnMain();
+}
+function getData(tableid){
+	var rowsnode=$('#'+tableid).rows;
+	var data = new Array();
+	for(var i=1;i<rowsnode.length;i++){
+		data[i]=new Array();
+		for(var j=1;j<rowsnode[i].cells.length;j++){
+			data[i][j]=rowsnode[i].cells[j].$("&INPUT")[0].value.trim();
+		}
+	}
+	//alert(data+'\n'+data[1]+data[1].length);
+	return data;
+}
+String.prototype.changeLgth=function (leth1){
+	if(null==leth1)
+		leth1=16;
+	str=this.substr(0);
+	var leth2=str.length;
+	if(leth2<leth1)
+		for(var i=0;i<leth1-leth2;i++)
+			str+=" ";
+	str+=" ";
+	return str;
+}
+function creatComFtrStr(tableid){
+	var data=getData(tableid);
+		//拼接字段，类型，约束
+	var tabname=$('#'+tableid+'name').value.trim();
+	var tabnote=$('#'+tableid+'note').value.trim();
+	var commononstr="comment on table "+tabname+"   is '" +tabnote+"';\n\n";
+	var ftrstr="";
+	for(var i=1;i<data.length;i++){
+		ftrstr+="   "+data[i][1].changeLgth(16)+data[i][2].changeLgth(16)+data[i][3].changeLgth(10)+",\n";
+		commononstr +="comment on column "+tabname+'.'+data[i][1].changeLgth(12)+" is '"+data[i][5]+"';\n";
+	}
+	ftrstr=ftrstr.substr(0,ftrstr.length-2)+'\n';
+	var sql={};
+	sql.tabname=tabname;
+	sql.ftrstr=ftrstr;
+	sql.commononstr=commononstr;
+	return sql;
+}
+function creatTabSQL(){
+	var sql=creatComFtrStr('mytable');
+	var craTabSql='CREATE TABLE '+sql.tabname+'\n(\n'+sql.ftrstr+');\n'+sql.commononstr+"\n";
+	$('#result').value+=craTabSql;
+}
+function creatIndexSQL(){
+	var ceks=$('^checkbox');
+	var tabname=$('#'+tableid+'name').value.trim();
+	var indexSql="";
+	for(var i=0;i<ceks.length;i++)
+		if(ceks[i].checked){
+			var colv=ceks[i].parentNode.parentNode.cells[1].$("&INPUT")[0].value.trim();
+			if(null==colv){
+				alert("字段名为空，不允许建立索引");
+				return;
+			}
+			indexSql+="CREATE INDEX IDX_"+colv+"_"+tabname +" on "+tabname+"("+colv+")"+"\n  TABLESPACE TBS_BOSSCRM_IDX\n  PCTFREE 10\n  INITRANS 2\n  MAXTRANS 255\n  STORAGE\n  (\n    INITIAL 1M\n    NEXT 1M\n    MINEXTENTS 1\n    MAXEXTENTS UNLIMITED\n  );\n" ;
+		}
+	//return indexSql;
+	$('#result').value+=indexSql;
+}
+function changeTabName(){
+	$('#mytable_seq_id').value="SEQ_"+$('#mytablename').value.toUpperCase()+"_ID"
+}
+function creatSeqSQL(){
+	var sql="CREATE SEQUENCE "+$('#mytable_seq_id').value+"\n    INCREMENT BY 1\n    START WITH 1\n    NOMAXVALUE\n    NOCYCLE\n    CACHE 10;"
+	$('#result').value+=sql;
+
+}
+</script>
+</html>
